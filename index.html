@@ -12,147 +12,62 @@
     .card { background: #FFFFFF; border-radius: 14px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); border: 1px solid #E2E8F0; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col md:flex-row">
+<body class="min-h-screen">
 
-  <!-- Sidebar -->
-  <aside class="w-full md:w-72 bg-[#14532D] text-white flex flex-col justify-between shrink-0">
-    <div>
-      <div class="p-6 border-b border-green-800">
-        <div class="flex items-center gap-2 text-xl font-bold text-yellow-400">
-          <span>🌴</span><span>PalmAnalytics</span>
-        </div>
-        <p class="text-xs text-green-200 mt-1">ระบบวิเคราะห์ผลผลิตปาล์มน้ำมัน<br>อ.ศรีสาคร จ.นราธิวาส</p>
-      </div>
-      <nav class="p-3 space-y-1.5" id="sidebarNav">
-        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item active w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
-          <span>📊</span><span>แดชบอร์ดวิเคราะห์ & ตัดสินใจ</span>
-        </button>
-        <button onclick="switchTab('plots')" data-tab="plots" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
-          <span>🌱</span><span>ข้อมูลแปลงปลูก (ตัวแปรต้น)</span>
-        </button>
-        <button onclick="switchTab('factors')" data-tab="factors" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
-          <span>🧪</span><span>บันทึกปัจจัยการผลิต & น้ำฝน</span>
-        </button>
-        <button onclick="switchTab('harvest')" data-tab="harvest" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
-          <span>⚖️</span><span>บันทึกผลผลิต & รายได้</span>
-        </button>
-      </nav>
-    </div>
-    <div class="p-4 border-t border-green-800 text-xs text-green-200 space-y-2">
-      <button onclick="exportCSV()" class="w-full bg-green-700 hover:bg-green-600 text-white py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-2 transition">
-        <span>📥</span><span>ส่งออกรายงาน CSV</span>
-      </button>
-      <button onclick="resetDemoData()" class="w-full text-green-300 hover:text-white py-1 text-center underline">
-        รีเซ็ตข้อมูลตัวอย่างเริ่มต้น
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="flex-1 p-5 md:p-8 overflow-y-auto">
-    <!-- Top Header & Farmer Selector -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
-      <div>
-        <h1 id="pageTitle" class="text-xl md:text-2xl font-bold text-[#14532D]">แดชบอร์ดวิเคราะห์ผลผลิตและปัจจัยที่สัมพันธ์กัน</h1>
-        <p class="text-xs text-slate-500 mt-0.5">พื้นที่ศึกษาวิจัย: อำเภอศรีสาคร จังหวัดนราธิวาส</p>
-      </div>
-      
-      <!-- Farmer Controls -->
-      <div class="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-        <span class="text-xs font-medium text-slate-600 pl-2">👨‍🌾 เกษตรกร:</span>
-        <select id="farmerSelector" onchange="changeActiveFarmer()" class="text-sm font-semibold text-[#14532D] bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 focus:outline-none">
-        </select>
-        <button onclick="openFarmerModal()" class="bg-[#14532D] hover:bg-green-800 text-white text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-1 transition shadow-sm">
-          <span>+ เพิ่มเกษตรกรใหม่</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- TAB 1: DASHBOARD -->
-    <section id="tab-dashboard" class="space-y-6">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card p-5">
-          <p class="text-xs text-slate-500">ผลผลิตเฉลี่ยต่อไร่ (ปี 2569)</p>
-          <p id="kpiYieldPerRai" class="text-2xl font-bold text-slate-800 mt-1">0 กก./ไร่</p>
-          <p id="kpiYieldCompare" class="text-xs text-emerald-600 mt-1.5 font-medium">▲ คำนวณจากข้อมูลจริงในระบบ</p>
-        </div>
-        <div class="card p-5">
-          <p class="text-xs text-slate-500">ผลผลิตรวมทั้งหมด</p>
-          <p id="kpiTotalYield" class="text-2xl font-bold text-slate-800 mt-1">0 กก.</p>
-          <p id="kpiTotalArea" class="text-xs text-emerald-600 mt-1.5 font-medium">พื้นที่รวม 0 ไร่</p>
-        </div>
-        <div class="card p-5">
-          <p class="text-xs text-slate-500">ปัจจัยที่มีผลสูงสุด (Correlation)</p>
-          <p class="text-xl font-bold text-slate-800 mt-1">การใส่ปุ๋ย + น้ำฝน</p>
-          <p id="kpiCorrelation" class="text-xs text-emerald-600 mt-1.5 font-medium">ค่าสหสัมพันธ์ r = 0.82 (สูงมาก)</p>
-        </div>
-        <div class="card p-5">
-          <p class="text-xs text-slate-500">กำไรสุทธิสะสม (หลังหักต้นทุน)</p>
-          <p id="kpiNetProfit" class="text-2xl font-bold text-slate-800 mt-1">0 ฿</p>
-          <p id="kpiCostRatio" class="text-xs text-amber-600 mt-1.5 font-medium">ต้นทุนปัจจัย 0% ของรายได้</p>
-        </div>
+  <!-- ==================== SCREEN 1: LOGIN / REGISTER ==================== -->
+  <div id="authScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#14532D] via-[#166534] to-[#0F3D22]">
+    <div class="bg-white rounded-2xl max-w-md w-full p-7 shadow-2xl space-y-6">
+      <div class="text-center space-y-1">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-100 text-3xl mb-2">🌴</div>
+        <h1 class="text-2xl font-bold text-[#14532D]">PalmAnalytics</h1>
+        <p class="text-xs text-slate-500">ระบบสารสนเทศวิเคราะห์ผลผลิตปาล์มน้ำมัน<br>อำเภอศรีสาคร จังหวัดนราธิวาส</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="card p-6 lg:col-span-2 flex flex-col justify-between">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <h2 class="font-bold text-slate-800 text-sm md:text-base">ความสัมพันธ์ระหว่างปริมาณน้ำฝน (มม.) และผลผลิต (กก./ไร่)</h2>
-            <div class="flex items-center gap-4 text-xs">
-              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>ผลผลิต</span>
-              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>น้ำฝน</span>
-            </div>
+      <!-- Auth Tabs -->
+      <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+        <button id="tabBtnLogin" onclick="toggleAuthMode('login')" class="py-2.5 rounded-lg bg-white text-[#14532D] shadow-sm transition">เข้าสู่ระบบ</button>
+        <button id="tabBtnRegister" onclick="toggleAuthMode('register')" class="py-2.5 rounded-lg text-slate-500 hover:text-slate-700 transition">ลงทะเบียนเกษตรกรใหม่</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+          <input type="text" id="loginUsername" required placeholder="กรอกชื่อผู้ใช้งาน" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-[#14532D]">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่าน (Password)</label>
+          <input type="password" id="loginPassword" required placeholder="กรอกรหัสผ่าน" class="w-full border border-slate-300 rounded-xl p-3 focus:outline-none focus:border-[#14532D]">
+        </div>
+        <button type="submit" class="w-full bg-[#14532D] hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition shadow-md">
+          🔐 เข้าสู่ระบบ
+        </button>
+
+        <!-- Demo Accounts Helper -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+          <p class="font-semibold text-slate-700">บัญชีสำหรับทดสอบระบบ (คลิกเพื่อกรอกอัตโนมัติ):</p>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="fillDemoLogin('abdulloh','1234')" class="px-2.5 py-1 bg-white border border-slate-300 rounded-lg hover:bg-green-50 text-slate-700">👨‍🌾 เกษตรกร 1 (abdulloh)</button>
+            <button type="button" onclick="fillDemoLogin('royhan','1234')" class="px-2.5 py-1 bg-white border border-slate-300 rounded-lg hover:bg-green-50 text-slate-700">👩‍🌾 เกษตรกร 2 (royhan)</button>
+            <button type="button" onclick="fillDemoLogin('admin','admin')" class="px-2.5 py-1 bg-amber-50 border border-amber-300 rounded-lg hover:bg-amber-100 text-amber-800 font-medium">📊 ผู้วิจัย (admin)</button>
           </div>
-          <div id="chartContainer" class="h-56 flex items-end justify-around gap-3 pt-6 pb-2 border-b border-slate-200"></div>
         </div>
+      </form>
 
-        <div class="card p-6 space-y-4">
-          <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
-            <span>💡</span><span>ข้อเสนอแนะเพื่อการตัดสินใจ</span>
-          </h2>
-          <div id="decisionAdviceBox" class="space-y-3"></div>
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="handleRegister(event)" class="hidden space-y-3.5 text-sm">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ-นามสกุล เกษตรกร</label>
+          <input type="text" id="regName" required placeholder="เช่น นายมะแอ สาและ" class="w-full border border-slate-300 rounded-xl p-2.5">
         </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: PLOTS -->
-    <section id="tab-plots" class="hidden space-y-6">
-      <div class="card p-6">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <h2 class="font-bold text-slate-800">รายการแปลงปลูกปาล์มน้ำมันในความดูแล</h2>
-          <span id="plotSummaryBadge" class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium"></span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
-                <th class="p-3">รหัสแปลง</th>
-                <th class="p-3">เกษตรกรเจ้าของสวน</th>
-                <th class="p-3">ที่ตั้ง (ตำบล)</th>
-                <th class="p-3">พื้นที่ (ไร่)</th>
-                <th class="p-3">จำนวนต้น</th>
-                <th class="p-3">อายุปาล์ม</th>
-                <th class="p-3">สภาพดิน</th>
-              </tr>
-            </thead>
-            <tbody id="plotsTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card p-6">
-        <h2 class="font-bold text-slate-800 mb-4">เพิ่มข้อมูลแปลงปลูกใหม่ (ตัวแปรต้น ด้านที่ 3)</h2>
-        <form onsubmit="addPlot(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">เกษตรกรเจ้าของแปลง</label>
-            <select id="plotFarmerId" required class="w-full border border-slate-300 rounded-lg p-2.5 bg-white"></select>
+            <label class="block text-xs font-medium text-slate-600 mb-1">หมู่บ้าน</label>
+            <input type="text" id="regVillage" required placeholder="เช่น หมู่ 4 บ้านไอร์กือแด" class="w-full border border-slate-300 rounded-xl p-2.5">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อแปลง / รหัสแปลงปลูก</label>
-            <input type="text" id="plotCode" required placeholder="เช่น PL-03 (สวนบ้านไอร์กือแด)" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ตำบลในอำเภอศรีสาคร</label>
-            <select id="plotSubdistrict" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
+            <label class="block text-xs font-medium text-slate-600 mb-1">ตำบล (อ.ศรีสาคร)</label>
+            <select id="regSubdistrict" class="w-full border border-slate-300 rounded-xl p-2.5 bg-white">
               <option value="ต.ซากอ">ต.ซากอ</option>
               <option value="ต.ศรีสาคร">ต.ศรีสาคร</option>
               <option value="ต.ตะมะยูง">ต.ตะมะยูง</option>
@@ -161,201 +76,336 @@
               <option value="ต.กาหลง">ต.กาหลง</option>
             </select>
           </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ขนาดพื้นที่ปลูก (ไร่)</label>
-            <input type="number" step="0.1" id="plotArea" required placeholder="เช่น 10" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">จำนวนต้นปาล์มทั้งหมด (ต้น)</label>
-            <input type="number" id="plotTrees" required placeholder="เช่น 220" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">อายุต้นปาล์มปัจจุบัน (ปี)</label>
-            <input type="number" id="plotAge" required placeholder="เช่น 7" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-slate-600 mb-1">ลักษณะสภาพดินในแปลง</label>
-            <select id="plotSoil" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
-              <option value="ดินร่วนปนทราย">ดินร่วนปนทราย</option>
-              <option value="ดินเหนียวปนทราย">ดินเหนียวปนทราย</option>
-              <option value="ดินร่วนเหนียว">ดินร่วนเหนียว</option>
-              <option value="ดินลูกรัง">ดินลูกรัง</option>
-            </select>
-          </div>
-          <div class="md:col-span-2">
-            <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
-              💾 บันทึกข้อมูลแปลงปลูก
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- TAB 3: FACTORS -->
-    <section id="tab-factors" class="hidden space-y-6">
-      <div class="card p-6">
-        <h2 class="font-bold text-slate-800 mb-4">บันทึกกิจกรรมการดูแลสวนและต้นทุนปัจจัยการผลิต (ตัวแปรต้น ด้านที่ 1, 2 และ 4)</h2>
-        <form onsubmit="addFactor(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">เลือกแปลงปลูก</label>
-            <select id="factorPlotId" required class="w-full border border-slate-300 rounded-lg p-2.5 bg-white"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">วันที่ดำเนินการ</label>
-            <input type="date" id="factorDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ประเภทปัจจัยด้านการจัดการสวน</label>
-            <select id="factorType" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
-              <option value="การใส่ปุ๋ย">การใส่ปุ๋ย (เคมี/อินทรีย์)</option>
-              <option value="กำจัดวัชพืช">กำจัดวัชพืชและตัดแต่งทางใบ</option>
-              <option value="จัดการน้ำ/ระบบรดน้ำ">การจัดการน้ำในแปลง</option>
-              <option value="ป้องกันโรคและแมลง">ป้องกันโรคและศัตรูพืช</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">รายละเอียด / สูตรปุ๋ย และปริมาณที่ใช้</label>
-            <input type="text" id="factorDetail" required placeholder="เช่น ปุ๋ยสูตร 15-15-15 อัตรา 3 กก./ต้น" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ต้นทุนค่าใช้จ่ายรอบนี้ (บาท)</label>
-            <input type="number" id="factorCost" required placeholder="เช่น 12500" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ปริมาณน้ำฝนเฉลี่ยช่วงนี้ (มม.)</label>
-            <input type="number" id="factorRain" required value="115" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div class="md:col-span-2">
-            <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
-              💾 บันทึกข้อมูลปัจจัยการผลิต
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card p-6">
-        <h2 class="font-bold text-slate-800 mb-4">ประวัติการจัดการสวนล่าสุด</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
-                <th class="p-3">วันที่</th>
-                <th class="p-3">แปลง / เกษตรกร</th>
-                <th class="p-3">กิจกรรมจัดการสวน</th>
-                <th class="p-3">รายละเอียด</th>
-                <th class="p-3">น้ำฝนช่วงนั้น</th>
-                <th class="p-3">ต้นทุน (บาท)</th>
-              </tr>
-            </thead>
-            <tbody id="factorsTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: HARVEST -->
-    <section id="tab-harvest" class="hidden space-y-6">
-      <div class="card p-6">
-        <h2 class="font-bold text-slate-800 mb-4">บันทึกผลการเก็บเกี่ยวรอบปัจจุบัน (ตัวแปรตาม)</h2>
-        <form onsubmit="addHarvest(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">เลือกแปลงที่เก็บเกี่ยว</label>
-            <select id="harvestPlotId" onchange="calcHarvestPreview()" required class="w-full border border-slate-300 rounded-lg p-2.5 bg-white"></select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">วันที่เก็บเกี่ยว (ความถี่รอบตัด 15 วัน)</label>
-            <input type="date" id="harvestDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">น้ำหนักผลผลิตรวมที่ตัดได้ (กิโลกรัม)</label>
-            <input type="number" id="harvestWeight" oninput="calcHarvestPreview()" required placeholder="เช่น 2450" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ราคาขายหน้าลาน ณ วันนั้น (บาท/กก.)</label>
-            <input type="number" step="0.01" id="harvestPrice" oninput="calcHarvestPreview()" required value="6.20" class="w-full border border-slate-300 rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">ผลผลิตเฉลี่ยต่อไร่รอบนี้ (คำนวณอัตโนมัติ)</label>
-            <input type="text" id="previewYieldPerRai" readonly value="0.00 กก./ไร่" class="w-full bg-green-50 border border-green-200 text-green-800 font-bold rounded-lg p-2.5">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">รายได้รวมรอบนี้ (คำนวณอัตโนมัติ)</label>
-            <input type="text" id="previewTotalIncome" readonly value="0.00 บาท" class="w-full bg-green-50 border border-green-200 text-green-800 font-bold rounded-lg p-2.5">
-          </div>
-          <div class="md:col-span-2">
-            <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
-              📈 บันทึกและอัปเดตสถิติผลผลิต
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card p-6">
-        <h2 class="font-bold text-slate-800 mb-4">ประวัติการเก็บเกี่ยวและรายได้ย้อนหลัง</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
-                <th class="p-3">วันที่ตัด</th>
-                <th class="p-3">แปลง / เกษตรกร</th>
-                <th class="p-3">ผลผลิตรวม (กก.)</th>
-                <th class="p-3">ผลผลิตต่อไร่ (กก./ไร่)</th>
-                <th class="p-3">ราคาขาย (บาท/กก.)</th>
-                <th class="p-3">รายได้รวม (บาท)</th>
-              </tr>
-            </thead>
-            <tbody id="harvestTableBody" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modal: Add New Farmer -->
-  <div id="farmerModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-[#14532D]">👨‍🌾 เพิ่มข้อมูลเกษตรกรรายใหม่</h3>
-        <button onclick="closeFarmerModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
-      </div>
-      <form onsubmit="addNewFarmer(event)" class="space-y-4 text-sm">
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ-นามสกุล เกษตรกร</label>
-          <input type="text" id="newFarmerName" required placeholder="เช่น นายมะแอ สาและ" class="w-full border border-slate-300 rounded-lg p-2.5">
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">หมู่บ้าน / พื้นที่</label>
-          <input type="text" id="newFarmerVillage" required placeholder="เช่น บ้านไอร์กือแด หมู่ 4" class="w-full border border-slate-300 rounded-lg p-2.5">
+          <label class="block text-xs font-medium text-slate-600 mb-1">ตั้งชื่อผู้ใช้งาน (Username สำหรับล็อกอิน)</label>
+          <input type="text" id="regUsername" required placeholder="ภาษาอังกฤษหรือตัวเลข เช่น maae01" class="w-full border border-slate-300 rounded-xl p-2.5">
         </div>
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">ตำบล (อำเภอศรีสาคร จังหวัดนราธิวาส)</label>
-          <select id="newFarmerSubdistrict" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
-            <option value="ต.ซากอ">ต.ซากอ</option>
-            <option value="ต.ศรีสาคร">ต.ศรีสาคร</option>
-            <option value="ต.ตะมะยูง">ต.ตะมะยูง</option>
-            <option value="ต.ศรีบรรพต">ต.ศรีบรรพต</option>
-            <option value="ต.เชิงคีรี">ต.เชิงคีรี</option>
-            <option value="ต.กาหลง">ต.กาหลง</option>
-          </select>
+          <label class="block text-xs font-medium text-slate-600 mb-1">ตั้งรหัสผ่าน (Password)</label>
+          <input type="password" id="regPassword" required placeholder="ตั้งรหัสผ่านอย่างน้อย 4 ตัวอักษร" class="w-full border border-slate-300 rounded-xl p-2.5">
         </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeFarmerModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50">ยกเลิก</button>
-          <button type="submit" class="px-4 py-2 rounded-lg bg-[#14532D] text-white font-medium hover:bg-green-800">บันทึกเกษตรกรใหม่</button>
-        </div>
+        <button type="submit" class="w-full bg-[#14532D] hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition shadow-md">
+          ✅ ยืนยันลงทะเบียนและเข้าใช้งาน
+        </button>
       </form>
     </div>
   </div>
 
+  <!-- ==================== SCREEN 2: MAIN APPLICATION ==================== -->
+  <div id="appScreen" class="hidden min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-72 bg-[#14532D] text-white flex flex-col justify-between shrink-0">
+      <div>
+        <div class="p-6 border-b border-green-800">
+          <div class="flex items-center gap-2 text-xl font-bold text-yellow-400">
+            <span>🌴</span><span>PalmAnalytics</span>
+          </div>
+          <p class="text-xs text-green-200 mt-1">ระบบวิเคราะห์ผลผลิตปาล์มน้ำมัน<br>อ.ศรีสาคร จ.นราธิวาส</p>
+        </div>
+        <nav class="p-3 space-y-1.5" id="sidebarNav">
+          <button onclick="switchTab('dashboard')" data-tab="dashboard" class="sidebar-item active w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
+            <span>📊</span><span>แดชบอร์ดวิเคราะห์ & ตัดสินใจ</span>
+          </button>
+          <button onclick="switchTab('plots')" data-tab="plots" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
+            <span>🌱</span><span>ข้อมูลแปลงปลูก (ตัวแปรต้น)</span>
+          </button>
+          <button onclick="switchTab('factors')" data-tab="factors" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
+            <span>🧪</span><span>บันทึกปัจจัยการผลิต & น้ำฝน</span>
+          </button>
+          <button onclick="switchTab('harvest')" data-tab="harvest" class="sidebar-item w-full text-left px-4 py-3 rounded-lg text-sm flex items-center gap-3 hover:bg-green-800/60 transition">
+            <span>⚖️</span><span>บันทึกผลผลิต & รายได้</span>
+          </button>
+        </nav>
+      </div>
+      <div class="p-4 border-t border-green-800 text-xs text-green-200 space-y-2">
+        <button onclick="exportCSV()" class="w-full bg-green-700 hover:bg-green-600 text-white py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-2 transition">
+          <span>📥</span><span>ส่งออกรายงาน CSV (เฉพาะสิทธิ์)</span>
+        </button>
+        <button onclick="resetDemoData()" class="w-full text-green-300 hover:text-white py-1 text-center underline">
+          รีเซ็ตข้อมูลตัวอย่างเริ่มต้น
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-5 md:p-8 overflow-y-auto">
+      <!-- Top Header & User Profile -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
+        <div>
+          <h1 id="pageTitle" class="text-xl md:text-2xl font-bold text-[#14532D]">แดชบอร์ดวิเคราะห์ผลผลิตและปัจจัยที่สัมพันธ์กัน</h1>
+          <p class="text-xs text-slate-500 mt-0.5">พื้นที่ศึกษาวิจัย: อำเภอศรีสาคร จังหวัดนราธิวาส</p>
+        </div>
+
+        <!-- Logged-in User Info & Logout -->
+        <div class="flex flex-wrap items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="text-right">
+            <p id="currentUserName" class="text-sm font-bold text-[#14532D]"></p>
+            <p id="currentUserRole" class="text-[11px] text-slate-500"></p>
+          </div>
+          <button onclick="handleLogout()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-semibold px-3 py-2 rounded-lg transition">
+            ออกจากระบบ
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Notice Banner (Visible ONLY when logged in as admin) -->
+      <div id="adminBanner" class="hidden mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
+        <div>
+          <span class="font-bold">🛡️ โหมดผู้วิจัย / ผู้ดูแลระบบ:</span> คุณกำลังดูข้อมูลภาพรวมของเกษตรกรทั้งหมดในระบบ (เกษตรกรทั่วไปจะเห็นเฉพาะข้อมูลของตนเองเท่านั้น)
+        </div>
+      </div>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card p-5">
+            <p class="text-xs text-slate-500">ผลผลิตเฉลี่ยต่อไร่ (ปี 2569)</p>
+            <p id="kpiYieldPerRai" class="text-2xl font-bold text-slate-800 mt-1">0 กก./ไร่</p>
+            <p class="text-xs text-emerald-600 mt-1.5 font-medium">▲ คำนวณเฉพาะแปลงของบัญชีนี้</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs text-slate-500">ผลผลิตรวมทั้งหมด</p>
+            <p id="kpiTotalYield" class="text-2xl font-bold text-slate-800 mt-1">0 กก.</p>
+            <p id="kpiTotalArea" class="text-xs text-emerald-600 mt-1.5 font-medium">พื้นที่รวม 0 ไร่</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs text-slate-500">ปัจจัยที่มีผลสูงสุด (Correlation)</p>
+            <p class="text-xl font-bold text-slate-800 mt-1">การใส่ปุ๋ย + น้ำฝน</p>
+            <p class="text-xs text-emerald-600 mt-1.5 font-medium">ค่าสหสัมพันธ์ r = 0.82 (สูงมาก)</p>
+          </div>
+          <div class="card p-5">
+            <p class="text-xs text-slate-500">กำไรสุทธิสะสม (หลังหักต้นทุน)</p>
+            <p id="kpiNetProfit" class="text-2xl font-bold text-slate-800 mt-1">0 ฿</p>
+            <p id="kpiCostRatio" class="text-xs text-amber-600 mt-1.5 font-medium">ต้นทุนปัจจัย 0% ของรายได้</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="card p-6 lg:col-span-2 flex flex-col justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+              <h2 class="font-bold text-slate-800 text-sm md:text-base">ความสัมพันธ์ระหว่างปริมาณน้ำฝน (มม.) และผลผลิต (กก./ไร่)</h2>
+              <div class="flex items-center gap-4 text-xs">
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span>ผลผลิต</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>น้ำฝน</span>
+              </div>
+            </div>
+            <div id="chartContainer" class="h-56 flex items-end justify-around gap-3 pt-6 pb-2 border-b border-slate-200"></div>
+          </div>
+
+          <div class="card p-6 space-y-4">
+            <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+              <span>💡</span><span>ข้อเสนอแนะเพื่อการตัดสินใจ</span>
+            </h2>
+            <div id="decisionAdviceBox" class="space-y-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PLOTS -->
+      <section id="tab-plots" class="hidden space-y-6">
+        <div class="card p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 class="font-bold text-slate-800">รายการแปลงปลูกปาล์มน้ำมันของคุณ</h2>
+            <span id="plotSummaryBadge" class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium"></span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
+                  <th class="p-3">รหัสแปลง</th>
+                  <th class="p-3">เจ้าของสวน</th>
+                  <th class="p-3">ที่ตั้ง (ตำบล)</th>
+                  <th class="p-3">พื้นที่ (ไร่)</th>
+                  <th class="p-3">จำนวนต้น</th>
+                  <th class="p-3">อายุปาล์ม</th>
+                  <th class="p-3">สภาพดิน</th>
+                </tr>
+              </thead>
+              <tbody id="plotsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="font-bold text-slate-800 mb-4">เพิ่มข้อมูลแปลงปลูกใหม่ (ตัวแปรต้น ด้านที่ 3)</h2>
+          <form onsubmit="addPlot(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อแปลง / รหัสแปลงปลูก</label>
+              <input type="text" id="plotCode" required placeholder="เช่น PL-03 (สวนบ้านไอร์กือแด)" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ตำบลในอำเภอศรีสาคร</label>
+              <select id="plotSubdistrict" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
+                <option value="ต.ซากอ">ต.ซากอ</option>
+                <option value="ต.ศรีสาคร">ต.ศรีสาคร</option>
+                <option value="ต.ตะมะยูง">ต.ตะมะยูง</option>
+                <option value="ต.ศรีบรรพต">ต.ศรีบรรพต</option>
+                <option value="ต.เชิงคีรี">ต.เชิงคีรี</option>
+                <option value="ต.กาหลง">ต.กาหลง</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ขนาดพื้นที่ปลูก (ไร่)</label>
+              <input type="number" step="0.1" id="plotArea" required placeholder="เช่น 10" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">จำนวนต้นปาล์มทั้งหมด (ต้น)</label>
+              <input type="number" id="plotTrees" required placeholder="เช่น 220" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">อายุต้นปาล์มปัจจุบัน (ปี)</label>
+              <input type="number" id="plotAge" required placeholder="เช่น 7" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ลักษณะสภาพดินในแปลง</label>
+              <select id="plotSoil" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
+                <option value="ดินร่วนปนทราย">ดินร่วนปนทราย</option>
+                <option value="ดินเหนียวปนทราย">ดินเหนียวปนทราย</option>
+                <option value="ดินร่วนเหนียว">ดินร่วนเหนียว</option>
+                <option value="ดินลูกรัง">ดินลูกรัง</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                💾 บันทึกข้อมูลแปลงปลูก
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 3: FACTORS -->
+      <section id="tab-factors" class="hidden space-y-6">
+        <div class="card p-6">
+          <h2 class="font-bold text-slate-800 mb-4">บันทึกกิจกรรมการดูแลสวนและต้นทุนปัจจัยการผลิต (ตัวแปรต้น ด้านที่ 1, 2 และ 4)</h2>
+          <form onsubmit="addFactor(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">เลือกแปลงปลูกของคุณ</label>
+              <select id="factorPlotId" required class="w-full border border-slate-300 rounded-lg p-2.5 bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">วันที่ดำเนินการ</label>
+              <input type="date" id="factorDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ประเภทปัจจัยด้านการจัดการสวน</label>
+              <select id="factorType" class="w-full border border-slate-300 rounded-lg p-2.5 bg-white">
+                <option value="การใส่ปุ๋ย">การใส่ปุ๋ย (เคมี/อินทรีย์)</option>
+                <option value="กำจัดวัชพืช">กำจัดวัชพืชและตัดแต่งทางใบ</option>
+                <option value="จัดการน้ำ/ระบบรดน้ำ">การจัดการน้ำในแปลง</option>
+                <option value="ป้องกันโรคและแมลง">ป้องกันโรคและศัตรูพืช</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">รายละเอียด / สูตรปุ๋ย และปริมาณที่ใช้</label>
+              <input type="text" id="factorDetail" required placeholder="เช่น ปุ๋ยสูตร 15-15-15 อัตรา 3 กก./ต้น" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ต้นทุนค่าใช้จ่ายรอบนี้ (บาท)</label>
+              <input type="number" id="factorCost" required placeholder="เช่น 12500" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ปริมาณน้ำฝนเฉลี่ยช่วงนี้ (มม.)</label>
+              <input type="number" id="factorRain" required value="115" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div class="md:col-span-2">
+              <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                💾 บันทึกข้อมูลปัจจัยการผลิต
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="font-bold text-slate-800 mb-4">ประวัติการจัดการสวนล่าสุด</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
+                  <th class="p-3">วันที่</th>
+                  <th class="p-3">รหัสแปลง</th>
+                  <th class="p-3">กิจกรรมจัดการสวน</th>
+                  <th class="p-3">รายละเอียด</th>
+                  <th class="p-3">น้ำฝนช่วงนั้น</th>
+                  <th class="p-3">ต้นทุน (บาท)</th>
+                </tr>
+              </thead>
+              <tbody id="factorsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: HARVEST -->
+      <section id="tab-harvest" class="hidden space-y-6">
+        <div class="card p-6">
+          <h2 class="font-bold text-slate-800 mb-4">บันทึกผลการเก็บเกี่ยวรอบปัจจุบัน (ตัวแปรตาม)</h2>
+          <form onsubmit="addHarvest(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">เลือกแปลงที่เก็บเกี่ยว</label>
+              <select id="harvestPlotId" onchange="calcHarvestPreview()" required class="w-full border border-slate-300 rounded-lg p-2.5 bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">วันที่เก็บเกี่ยว (ความถี่รอบตัด 15 วัน)</label>
+              <input type="date" id="harvestDate" required class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">น้ำหนักผลผลิตรวมที่ตัดได้ (กิโลกรัม)</label>
+              <input type="number" id="harvestWeight" oninput="calcHarvestPreview()" required placeholder="เช่น 2450" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ราคาขายหน้าลาน ณ วันนั้น (บาท/กก.)</label>
+              <input type="number" step="0.01" id="harvestPrice" oninput="calcHarvestPreview()" required value="6.20" class="w-full border border-slate-300 rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">ผลผลิตเฉลี่ยต่อไร่รอบนี้ (คำนวณอัตโนมัติ)</label>
+              <input type="text" id="previewYieldPerRai" readonly value="0.00 กก./ไร่" class="w-full bg-green-50 border border-green-200 text-green-800 font-bold rounded-lg p-2.5">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">รายได้รวมรอบนี้ (คำนวณอัตโนมัติ)</label>
+              <input type="text" id="previewTotalIncome" readonly value="0.00 บาท" class="w-full bg-green-50 border border-green-200 text-green-800 font-bold rounded-lg p-2.5">
+            </div>
+            <div class="md:col-span-2">
+              <button type="submit" class="bg-[#14532D] hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                📈 บันทึกและอัปเดตสถิติผลผลิต
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-6">
+          <h2 class="font-bold text-slate-800 mb-4">ประวัติการเก็บเกี่ยวและรายได้ย้อนหลัง</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-xs">
+                  <th class="p-3">วันที่ตัด</th>
+                  <th class="p-3">รหัสแปลง</th>
+                  <th class="p-3">ผลผลิตรวม (กก.)</th>
+                  <th class="p-3">ผลผลิตต่อไร่ (กก./ไร่)</th>
+                  <th class="p-3">ราคาขาย (บาท/กก.)</th>
+                  <th class="p-3">รายได้รวม (บาท)</th>
+                </tr>
+              </thead>
+              <tbody id="harvestTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
   <script>
     const defaultData = {
-      activeFarmerId: 'ALL',
-      farmers: [
-        { id: 'F-01', name: 'นายอับดุลเลาะ มะแซ', village: 'บ้านซากอ หมู่ 1', subdistrict: 'ต.ซากอ' },
-        { id: 'F-02', name: 'นางรอยฮาน หะยีดอเลาะ', village: 'บ้านศรีสาคร หมู่ 2', subdistrict: 'ต.ศรีสาคร' }
+      users: [
+        { id: 'U-ADMIN', username: 'admin', password: 'admin', role: 'admin', name: 'ผู้ดูแลระบบ / นักวิจัย', village: 'อ.ศรีสาคร', subdistrict: 'ทุกตำบล' },
+        { id: 'F-01', username: 'abdulloh', password: '1234', role: 'farmer', name: 'นายอับดุลเลาะ มะแซ', village: 'บ้านซากอ หมู่ 1', subdistrict: 'ต.ซากอ' },
+        { id: 'F-02', username: 'royhan', password: '1234', role: 'farmer', name: 'นางรอยฮาน หะยีดอเลาะ', village: 'บ้านศรีสาคร หมู่ 2', subdistrict: 'ต.ศรีสาคร' }
       ],
       plots: [
-        { id: 'PL-01', farmerId: 'F-01', subdistrict: 'ต.ซากอ', area: 8, trees: 176, age: 9, soil: 'ดินร่วนปนทราย' },
-        { id: 'PL-02', farmerId: 'F-02', subdistrict: 'ต.ศรีสาคร', area: 7, trees: 154, age: 5, soil: 'ดินเหนียวปนทราย' }
+        { id: 'PL-01', ownerId: 'F-01', subdistrict: 'ต.ซากอ', area: 8, trees: 176, age: 9, soil: 'ดินร่วนปนทราย' },
+        { id: 'PL-02', ownerId: 'F-02', subdistrict: 'ต.ศรีสาคร', area: 7, trees: 154, age: 5, soil: 'ดินเหนียวปนทราย' }
       ],
       factors: [
         { date: '2026-11-14', plotId: 'PL-01', type: 'การใส่ปุ๋ย', detail: 'สูตร 15-15-15 (3 กก./ต้น)', rain: 115, cost: 12500 },
@@ -367,11 +417,12 @@
       ]
     };
 
-    let appData = JSON.parse(localStorage.getItem('palmAnalyticsSisakhonV2')) || defaultData;
+    let appData = JSON.parse(localStorage.getItem('palmAnalyticsAuthV3')) || defaultData;
+    let currentUser = JSON.parse(sessionStorage.getItem('palmCurrentUser')) || null;
 
     function saveData() {
-      localStorage.setItem('palmAnalyticsSisakhonV2', JSON.stringify(appData));
-      renderAll();
+      localStorage.setItem('palmAnalyticsAuthV3', JSON.stringify(appData));
+      if (currentUser) renderAll();
     }
 
     function resetDemoData() {
@@ -381,35 +432,93 @@
       }
     }
 
-    // Farmer Modal & Selector
-    function openFarmerModal() {
-      document.getElementById('farmerModal').classList.remove('hidden');
-      document.getElementById('farmerModal').classList.add('flex');
+    // Auth Functions
+    function toggleAuthMode(mode) {
+      const loginForm = document.getElementById('loginForm');
+      const regForm = document.getElementById('registerForm');
+      const btnLogin = document.getElementById('tabBtnLogin');
+      const btnReg = document.getElementById('tabBtnRegister');
+      if (mode === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        btnLogin.className = 'py-2.5 rounded-lg bg-white text-[#14532D] shadow-sm transition';
+        btnReg.className = 'py-2.5 rounded-lg text-slate-500 hover:text-slate-700 transition';
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        btnReg.className = 'py-2.5 rounded-lg bg-white text-[#14532D] shadow-sm transition';
+        btnLogin.className = 'py-2.5 rounded-lg text-slate-500 hover:text-slate-700 transition';
+      }
     }
-    function closeFarmerModal() {
-      document.getElementById('farmerModal').classList.add('hidden');
-      document.getElementById('farmerModal').classList.remove('flex');
+
+    function fillDemoLogin(u, p) {
+      document.getElementById('loginUsername').value = u;
+      document.getElementById('loginPassword').value = p;
     }
-    function addNewFarmer(e) {
+
+    function handleLogin(e) {
       e.preventDefault();
-      const newId = 'F-' + String(appData.farmers.length + 1).padStart(2, '0');
-      const name = document.getElementById('newFarmerName').value.trim();
-      const village = document.getElementById('newFarmerVillage').value.trim();
-      const subdistrict = document.getElementById('newFarmerSubdistrict').value;
-      appData.farmers.push({ id: newId, name, village, subdistrict });
-      appData.activeFarmerId = newId;
+      const u = document.getElementById('loginUsername').value.trim().toLowerCase();
+      const p = document.getElementById('loginPassword').value.trim();
+      const found = appData.users.find(user => user.username.toLowerCase() === u && user.password === p);
+      if (!found) {
+        alert('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+      currentUser = found;
+      sessionStorage.setItem('palmCurrentUser', JSON.stringify(currentUser));
+      showAppScreen();
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const village = document.getElementById('regVillage').value.trim();
+      const subdistrict = document.getElementById('regSubdistrict').value;
+      const username = document.getElementById('regUsername').value.trim().toLowerCase();
+      const password = document.getElementById('regPassword').value.trim();
+
+      if (appData.users.some(u => u.username.toLowerCase() === username)) {
+        alert('ชื่อผู้ใช้งาน (Username) นี้มีคนใช้แล้ว กรุณาตั้งชื่ออื่น');
+        return;
+      }
+
+      const newUser = {
+        id: 'F-' + String(appData.users.length + 1).padStart(2, '0'),
+        username,
+        password,
+        role: 'farmer',
+        name,
+        village,
+        subdistrict
+      };
+      appData.users.push(newUser);
+      saveData();
+
+      currentUser = newUser;
+      sessionStorage.setItem('palmCurrentUser', JSON.stringify(currentUser));
       e.target.reset();
-      closeFarmerModal();
-      saveData();
-      alert('เพิ่มเกษตรกร "' + name + '" เรียบร้อยแล้ว! สามารถเพิ่มแปลงปลูกให้เกษตรกรท่านนี้ต่อได้เลย');
+      alert('ลงทะเบียนสำเร็จ! ยินดีต้อนรับคุณ ' + name + ' กรุณาเพิ่มข้อมูลแปลงปลูกของคุณเพื่อเริ่มต้นใช้งาน');
+      showAppScreen();
+      switchTab('plots');
     }
-    function changeActiveFarmer() {
-      appData.activeFarmerId = document.getElementById('farmerSelector').value;
-      saveData();
+
+    function handleLogout() {
+      currentUser = null;
+      sessionStorage.removeItem('palmCurrentUser');
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
     }
-    function getFarmerName(fId) {
-      const f = appData.farmers.find(x => x.id === fId);
-      return f ? f.name : 'ไม่ระบุ';
+
+    function showAppScreen() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('appScreen').classList.remove('hidden');
+      document.getElementById('currentUserName').textContent = '👤 ' + currentUser.name;
+      document.getElementById('currentUserRole').textContent = currentUser.role === 'admin'
+        ? 'สิทธิ์: ผู้วิจัย / ดูภาพรวมทั้งหมด'
+        : `เกษตรกร • ${currentUser.village} ${currentUser.subdistrict}`;
+      document.getElementById('adminBanner').classList.toggle('hidden', currentUser.role !== 'admin');
+      renderAll();
     }
 
     // Tab Navigation
@@ -430,12 +539,17 @@
       document.getElementById('pageTitle').textContent = titles[tabName];
     }
 
-    // Add Plot
+    function getUserName(ownerId) {
+      const u = appData.users.find(x => x.id === ownerId);
+      return u ? u.name : 'ไม่ระบุ';
+    }
+
+    // Add Plot (Automatically bound to currentUser.id)
     function addPlot(e) {
       e.preventDefault();
       appData.plots.push({
         id: document.getElementById('plotCode').value.trim(),
-        farmerId: document.getElementById('plotFarmerId').value,
+        ownerId: currentUser.id,
         subdistrict: document.getElementById('plotSubdistrict').value,
         area: parseFloat(document.getElementById('plotArea').value),
         trees: parseInt(document.getElementById('plotTrees').value),
@@ -444,15 +558,17 @@
       });
       e.target.reset();
       saveData();
-      alert('บันทึกข้อมูลแปลงปลูกเรียบร้อยแล้ว');
+      alert('บันทึกข้อมูลแปลงปลูกของคุณเรียบร้อยแล้ว');
     }
 
     // Add Factor
     function addFactor(e) {
       e.preventDefault();
+      const plotId = document.getElementById('factorPlotId').value;
+      if (!plotId) { alert('กรุณาเพิ่มข้อมูลแปลงปลูกก่อนบันทึกปัจจัยการผลิต'); return; }
       appData.factors.unshift({
         date: document.getElementById('factorDate').value,
-        plotId: document.getElementById('factorPlotId').value,
+        plotId,
         type: document.getElementById('factorType').value,
         detail: document.getElementById('factorDetail').value.trim(),
         cost: parseFloat(document.getElementById('factorCost').value),
@@ -475,11 +591,14 @@
       document.getElementById('previewYieldPerRai').value = yieldPerRai.toFixed(2) + ' กก./ไร่';
       document.getElementById('previewTotalIncome').value = income.toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' บาท';
     }
+
     function addHarvest(e) {
       e.preventDefault();
+      const plotId = document.getElementById('harvestPlotId').value;
+      if (!plotId) { alert('กรุณาเพิ่มข้อมูลแปลงปลูกก่อนบันทึกผลผลิต'); return; }
       appData.harvests.unshift({
         date: document.getElementById('harvestDate').value,
-        plotId: document.getElementById('harvestPlotId').value,
+        plotId,
         weight: parseFloat(document.getElementById('harvestWeight').value),
         price: parseFloat(document.getElementById('harvestPrice').value)
       });
@@ -490,87 +609,81 @@
       alert('บันทึกผลผลิตและอัปเดตแดชบอร์ดเรียบร้อยแล้ว');
     }
 
-    // Render All Views
-    function renderAll() {
-      // 1. Render Farmer Dropdowns
-      const selector = document.getElementById('farmerSelector');
-      selector.innerHTML = `<option value="ALL">📊 เกษตรกรทั้งหมด (${appData.farmers.length} ราย)</option>` +
-        appData.farmers.map(f => `<option value="${f.id}" ${appData.activeFarmerId === f.id ? 'selected' : ''}>${f.name} (${f.subdistrict})</option>`).join('');
-
-      const plotFarmerSelect = document.getElementById('plotFarmerId');
-      plotFarmerSelect.innerHTML = appData.farmers.map(f => `<option value="${f.id}" ${appData.activeFarmerId === f.id ? 'selected' : ''}>${f.name} (${f.subdistrict})</option>`).join('');
-
-      // Filter by active farmer
-      const filteredPlots = appData.activeFarmerId === 'ALL'
+    // Render Data Strictly Filtered by Current Logged-In User
+    function getAuthorizedData() {
+      const myPlots = currentUser.role === 'admin'
         ? appData.plots
-        : appData.plots.filter(p => p.farmerId === appData.activeFarmerId);
-      const validPlotIds = new Set(filteredPlots.map(p => p.id));
-      const filteredFactors = appData.factors.filter(f => validPlotIds.has(f.plotId));
-      const filteredHarvests = appData.harvests.filter(h => validPlotIds.has(h.plotId));
+        : appData.plots.filter(p => p.ownerId === currentUser.id);
+      const myPlotIds = new Set(myPlots.map(p => p.id));
+      const myFactors = appData.factors.filter(f => myPlotIds.has(f.plotId));
+      const myHarvests = appData.harvests.filter(h => myPlotIds.has(h.plotId));
+      return { myPlots, myFactors, myHarvests };
+    }
 
-      // Populate Plot Dropdowns in Factor & Harvest tabs
-      const plotOptions = filteredPlots.length > 0
-        ? filteredPlots.map(p => `<option value="${p.id}">${p.id} - ${getFarmerName(p.farmerId)} (${p.area} ไร่)</option>`).join('')
-        : `<option value="">-- ยังไม่มีแปลงปลูก (กรุณาเพิ่มแปลงปลูกก่อน) --</option>`;
+    function renderAll() {
+      const { myPlots, myFactors, myHarvests } = getAuthorizedData();
+
+      // Populate Plot Dropdowns (ONLY user's own plots)
+      const plotOptions = myPlots.length > 0
+        ? myPlots.map(p => `<option value="${p.id}">${p.id} (${p.subdistrict} - ${p.area} ไร่)</option>`).join('')
+        : `<option value="">-- คุณยังไม่มีแปลงปลูก (กรุณาเพิ่มแปลงปลูกก่อน) --</option>`;
       document.getElementById('factorPlotId').innerHTML = plotOptions;
       document.getElementById('harvestPlotId').innerHTML = plotOptions;
 
-      // 2. Render Plots Table
-      const totalArea = filteredPlots.reduce((sum, p) => sum + p.area, 0);
-      document.getElementById('plotSummaryBadge').textContent = `รวม ${filteredPlots.length} แปลง / ${totalArea} ไร่`;
-      document.getElementById('plotsTableBody').innerHTML = filteredPlots.length > 0 ? filteredPlots.map(p => `
+      // Render Plots Table
+      const totalArea = myPlots.reduce((sum, p) => sum + p.area, 0);
+      document.getElementById('plotSummaryBadge').textContent = `รวม ${myPlots.length} แปลง / ${totalArea} ไร่`;
+      document.getElementById('plotsTableBody').innerHTML = myPlots.length > 0 ? myPlots.map(p => `
         <tr>
           <td class="p-3 font-semibold text-[#14532D]">${p.id}</td>
-          <td class="p-3 font-medium">${getFarmerName(p.farmerId)}</td>
+          <td class="p-3 font-medium">${getUserName(p.ownerId)}</td>
           <td class="p-3">${p.subdistrict} อ.ศรีสาคร</td>
           <td class="p-3">${p.area} ไร่</td>
           <td class="p-3">${p.trees} ต้น</td>
           <td class="p-3">${p.age} ปี</td>
           <td class="p-3">${p.soil}</td>
         </tr>
-      `).join('') : `<tr><td colspan="7" class="p-4 text-center text-slate-400">ยังไม่มีข้อมูลแปลงปลูกสำหรับเกษตรกรรายนี้</td></tr>`;
+      `).join('') : `<tr><td colspan="7" class="p-4 text-center text-slate-400">คุณยังไม่มีข้อมูลแปลงปลูก กรุณาเพิ่มข้อมูลด้านล่าง</td></tr>`;
 
-      // 3. Render Factors Table
-      document.getElementById('factorsTableBody').innerHTML = filteredFactors.length > 0 ? filteredFactors.map(f => {
-        const plot = appData.plots.find(p => p.id === f.plotId);
-        return `
+      // Render Factors Table
+      document.getElementById('factorsTableBody').innerHTML = myFactors.length > 0 ? myFactors.map(f => `
         <tr>
           <td class="p-3">${f.date}</td>
-          <td class="p-3 font-medium">${f.plotId} (${plot ? getFarmerName(plot.farmerId) : ''})</td>
+          <td class="p-3 font-medium">${f.plotId}</td>
           <td class="p-3"><span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full">${f.type}</span></td>
           <td class="p-3">${f.detail}</td>
           <td class="p-3">${f.rain} มม.</td>
           <td class="p-3 font-semibold">${f.cost.toLocaleString()} ฿</td>
-        </tr>`;
-      }).join('') : `<tr><td colspan="6" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการบันทึกปัจจัยการผลิต</td></tr>`;
+        </tr>
+      `).join('') : `<tr><td colspan="6" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการบันทึกปัจจัยการผลิตของคุณ</td></tr>`;
 
-      // 4. Render Harvest Table
-      document.getElementById('harvestTableBody').innerHTML = filteredHarvests.length > 0 ? filteredHarvests.map(h => {
-        const plot = appData.plots.find(p => p.id === h.plotId);
+      // Render Harvest Table
+      document.getElementById('harvestTableBody').innerHTML = myHarvests.length > 0 ? myHarvests.map(h => {
+        const plot = myPlots.find(p => p.id === h.plotId);
         const ypr = plot && plot.area > 0 ? (h.weight / plot.area).toFixed(2) : '0.00';
         const inc = h.weight * h.price;
         return `
         <tr>
           <td class="p-3">${h.date}</td>
-          <td class="p-3 font-medium">${h.plotId} (${plot ? getFarmerName(plot.farmerId) : ''})</td>
+          <td class="p-3 font-medium">${h.plotId}</td>
           <td class="p-3">${h.weight.toLocaleString()} กก.</td>
           <td class="p-3 font-bold text-slate-800">${ypr} กก./ไร่</td>
           <td class="p-3">${h.price.toFixed(2)} ฿</td>
           <td class="p-3"><span class="bg-emerald-100 text-emerald-800 font-semibold text-xs px-2.5 py-1 rounded-full">${inc.toLocaleString()} ฿</span></td>
         </tr>`;
-      }).join('') : `<tr><td colspan="6" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการเก็บเกี่ยว</td></tr>`;
+      }).join('') : `<tr><td colspan="6" class="p-4 text-center text-slate-400">ยังไม่มีประวัติการเก็บเกี่ยวของคุณ</td></tr>`;
 
-      // 5. Update KPIs & Chart
-      const totalWeight = filteredHarvests.reduce((s, h) => s + h.weight, 0);
-      const totalIncome = filteredHarvests.reduce((s, h) => s + (h.weight * h.price), 0);
-      const totalCost = filteredFactors.reduce((s, f) => s + f.cost, 0);
+      // Update KPIs
+      const totalWeight = myHarvests.reduce((s, h) => s + h.weight, 0);
+      const totalIncome = myHarvests.reduce((s, h) => s + (h.weight * h.price), 0);
+      const totalCost = myFactors.reduce((s, f) => s + f.cost, 0);
       const netProfit = totalIncome - totalCost;
       const avgYieldPerRai = totalArea > 0 ? Math.round((totalWeight * 12) / totalArea) : 0;
       const costRatio = totalIncome > 0 ? Math.round((totalCost / totalIncome) * 100) : 0;
 
       document.getElementById('kpiYieldPerRai').textContent = avgYieldPerRai.toLocaleString() + ' กก./ไร่';
       document.getElementById('kpiTotalYield').textContent = totalWeight.toLocaleString() + ' กก.';
-      document.getElementById('kpiTotalArea').textContent = `พื้นที่รวม ${totalArea} ไร่ (${filteredPlots.length} แปลง)`;
+      document.getElementById('kpiTotalArea').textContent = `พื้นที่รวม ${totalArea} ไร่ (${myPlots.length} แปลง)`;
       document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ฿';
       document.getElementById('kpiCostRatio').textContent = `ต้นทุนปัจจัยคิดเป็น ${costRatio}% ของรายได้`;
 
@@ -589,8 +702,8 @@
       `).join('');
 
       // Decision Advice
-      const avgRain = filteredFactors.length > 0
-        ? Math.round(filteredFactors.reduce((s, f) => s + f.rain, 0) / filteredFactors.length)
+      const avgRain = myFactors.length > 0
+        ? Math.round(myFactors.reduce((s, f) => s + f.rain, 0) / myFactors.length)
         : 110;
       document.getElementById('decisionAdviceBox').innerHTML = `
         <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-xs space-y-1">
@@ -605,22 +718,22 @@
     }
 
     function exportCSV() {
-      let csv = '\uFEFFรหัสแปลง,เกษตรกรเจ้าของสวน,ตำบล,พื้นที่(ไร่),จำนวนต้น,อายุปาล์ม(ปี),สภาพดิน\n';
-      appData.plots.forEach(p => {
-        csv += `${p.id},"${getFarmerName(p.farmerId)}",${p.subdistrict},${p.area},${p.trees},${p.age},${p.soil}\n`;
+      const { myPlots } = getAuthorizedData();
+      let csv = '\uFEFFรหัสแปลง,เจ้าของสวน,ตำบล,พื้นที่(ไร่),จำนวนต้น,อายุปาล์ม(ปี),สภาพดิน\n';
+      myPlots.forEach(p => {
+        csv += `${p.id},"${getUserName(p.ownerId)}",${p.subdistrict},${p.area},${p.trees},${p.age},${p.soil}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'PalmAnalytics_Sisakhon_Report.csv';
+      link.download = `PalmAnalytics_${currentUser.username}.csv`;
       link.click();
     }
 
     // Init
     document.getElementById('factorDate').valueAsDate = new Date();
     document.getElementById('harvestDate').valueAsDate = new Date();
-    renderAll();
-    calcHarvestPreview();
+    if (currentUser) showAppScreen();
   </script>
 </body>
 </html>
